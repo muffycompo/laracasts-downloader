@@ -3,6 +3,9 @@
 /**
  * Composer autoloader.
  */
+
+use Dotenv\Dotenv;
+
 require 'vendor/autoload.php';
 
 /*
@@ -11,8 +14,8 @@ require 'vendor/autoload.php';
 
 $options = array();
 
-$dotenv = new Dotenv\Dotenv(__DIR__);
-$dotenv->load();
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
 
 $timezone = getenv('TIMEZONE');
 
