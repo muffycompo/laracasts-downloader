@@ -12,6 +12,7 @@ use App\System\Controller as SystemController;
 use App\Utils\Utils;
 use Cocur\Slugify\Slugify;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Ubench;
@@ -79,6 +80,7 @@ class Downloader
      *
      * @param $options
      * @throws FilesystemException
+     * @throws GuzzleException
      */
     public function start($options): void
     {
@@ -176,6 +178,8 @@ class Downloader
      * @param $newEpisodes
      * @param $counter
      * @param $newEpisodesCount
+     * @throws FilesystemException
+     * @throws GuzzleException
      */
     public function downloadEpisodes($newEpisodes, &$counter, $newEpisodesCount): void
     {

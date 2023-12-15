@@ -295,7 +295,7 @@ class Resolver
         $link = $this->prepareDownloadLink($downloadUrl);
 
         try {
-//            $downloadedBytesSoFar = file_exists($saveTo) ? filesize($saveTo) : 0;
+            $bytesDownloaded = file_exists($saveTo) ? filesize($saveTo) : 0;
 
             $this->client->request(
                 method: 'GET',
@@ -303,14 +303,12 @@ class Resolver
                 options: [
                     'query' => Query::parse($link['query'], false),
                     'save_to' => fopen($saveTo, 'a'),
-                    'progress' => function ($downloadTotal, $downloadedBytes): void {
-                        if (php_sapi_name() === "cli") {
-                            printf("> Downloaded %s of %s (%d%%)      \r",
-                                Utils::formatBytes($downloadedBytes),
-                                Utils::formatBytes($downloadTotal),
-                                Utils::getPercentage($downloadedBytes, $downloadTotal)
-                            );
-                        }
+                    'progress' => function ($downloadTotal, $downloadedBytes) use ($bytesDownloaded): void {
+                        Utils::showProgressBar(
+                            downloadTotal: $downloadTotal,
+                            downloadedBytes: $downloadedBytes,
+                            bytesDownloaded: $bytesDownloaded
+                        );
                     },
                 ]
             );

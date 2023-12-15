@@ -163,13 +163,19 @@ class Utils
         }
     }
 
-    public static function showProgressBar($downloadTotal, $downloadedBytes): void
+    public static function showProgressBar($downloadTotal, $downloadedBytes, $bytesDownloaded, $totalBytes = null): void
     {
         if (php_sapi_name() === "cli") {
+            $totalBytes = $totalBytes ?? $downloadTotal;
+
+            if ($totalBytes === $downloadedBytes) {
+                return;
+            }
+
             printf("> Downloaded %s of %s (%d%%)      \r",
-                Utils::formatBytes($downloadedBytes),
-                Utils::formatBytes($downloadTotal),
-                Utils::getPercentage($downloadedBytes, $downloadTotal)
+                Utils::formatBytes($bytesDownloaded + $downloadedBytes),
+                Utils::formatBytes($totalBytes),
+                Utils::getPercentage($bytesDownloaded + $downloadedBytes, $totalBytes)
             );
         }
     }

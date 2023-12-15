@@ -57,6 +57,7 @@ class VimeoDownloader
      * @param $sourceData
      * @param $filepath
      * @return void
+     * @throws GuzzleException
      */
     private function downloadSource($baseURL, $sourceData, $filepath): void
     {
@@ -84,25 +85,24 @@ class VimeoDownloader
 
         Utils::writeln("Downloading $type...");
 
-//        $downloadedBytes = 0;
+        $bytesDownloaded = 0;
 //
-//        $totalBytes = array_sum($sizes);
+        $totalBytes = array_sum($sizes);
 
         foreach ($segmentURLs as $index => $segmentURL) {
             $this->client->request('GET', $segmentURL, [
                 'save_to' => fopen($filepath, 'a'),
-                'progress' => function ($downloadTotal, $downloadedBytes): void {
-                    if (php_sapi_name() === "cli") {
-                        printf("> Downloaded %s of %s (%d%%)      \r",
-                            Utils::formatBytes($downloadedBytes),
-                            Utils::formatBytes($downloadTotal),
-                            Utils::getPercentage($downloadedBytes, $downloadTotal)
-                        );
-                    }
+                'progress' => function ($downloadTotal, $downloadedBytes) use ($bytesDownloaded, $totalBytes): void {
+                    Utils::showProgressBar(
+                        downloadTotal: $downloadTotal,
+                        downloadedBytes: $downloadedBytes,
+                        bytesDownloaded: $bytesDownloaded,
+                        totalBytes: $totalBytes
+                    );
                 },
             ]);
 
-//            $downloadedBytes += $sizes[$index];
+            $bytesDownloaded += $sizes[$index];
         }
     }
 
