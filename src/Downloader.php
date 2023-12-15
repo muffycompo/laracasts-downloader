@@ -13,6 +13,7 @@ use App\Utils\Utils;
 use Cocur\Slugify\Slugify;
 use GuzzleHttp\Client as HttpClient;
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 use Ubench;
 
 /**
@@ -77,6 +78,7 @@ class Downloader
      * All the logic
      *
      * @param $options
+     * @throws FilesystemException
      */
     public function start($options): void
     {
@@ -139,7 +141,7 @@ class Downloader
     }
 
     /**
-     * Tries to login.
+     * Tries to authenticate.
      *
      * @param string $email
      * @param string $password

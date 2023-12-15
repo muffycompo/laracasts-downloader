@@ -143,6 +143,7 @@ class Resolver
      * @param array $episode
      *
      * @return bool
+     * @throws GuzzleException
      */
     public function downloadEpisode(string $seriesSlug, array $episode): bool
     {
