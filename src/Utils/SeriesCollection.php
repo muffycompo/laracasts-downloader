@@ -9,7 +9,7 @@ class SeriesCollection
     /**
      * @var array
      */
-    private $series;
+    private array $series;
 
     public function __construct(array $series)
     {
@@ -21,45 +21,45 @@ class SeriesCollection
      * @param string $value
      * @return $this
      */
-    public function where($key, $value)
+    public function where(string $key, string $value): static
     {
-        $series = [];
+        $allSeries = [];
 
-        foreach ($this->series as $serie) {
-            if ($serie[$key] == $value) {
-                array_push($series, $serie);
+        foreach ($this->series as $series) {
+            if ($series[$key] == $value) {
+                $allSeries[] = $series;
             }
         }
 
-        return new SeriesCollection($series);
+        return new SeriesCollection($allSeries);
     }
 
-    public function sum($key, $actual)
+    public function sum($key, $actual): int
     {
         $sum = 0;
 
-        foreach ($this->series as $serie) {
+        foreach ($this->series as $series) {
             if ($actual) {
-                $sum += intval(count($serie[str_replace('_count', '', $key) . 's']));
+                $sum += intval(count($series[str_replace('_count', '', $key) . 's']));
             } else {
-                $sum += intval($serie[$key]);
+                $sum += intval($series[$key]);
             }
         }
 
         return $sum;
     }
 
-    public function count()
+    public function count(): int
     {
         return (int) count($this->series);
     }
 
-    public function get()
+    public function get(): array
     {
         return $this->series;
     }
 
-    public function exists()
+    public function exists(): bool
     {
         return ! empty($this->series);
     }
@@ -69,8 +69,8 @@ class SeriesCollection
         return $this->exists() ? $this->series[0] : null;
     }
 
-    public function add($serie)
+    public function add($series): void
     {
-        $this->series[$serie['slug']] = $serie;
+        $this->series[$series['slug']] = $series;
     }
 }

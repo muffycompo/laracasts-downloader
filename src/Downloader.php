@@ -27,32 +27,31 @@ class Downloader
      *
      * @var Resolver
      */
-    private $client;
+    private Resolver $client;
 
     /**
      * System object
      *
      * @var SystemController
      */
-    private $system;
+    private SystemController $system;
 
     /**
      * Ubench lib
      *
      * @var Ubench
      */
-    private $bench;
+    private Ubench $bench;
 
-    // [string => number[]]
-    private $filters = [];
+    private array $filters = [];
 
     /**
      * @var LaracastsController
      */
-    private $laracasts;
+    private LaracastsController $laracasts;
 
     /** @var bool Don't scrap pages and only get from existing cache */
-    private $cacheOnly = false;
+    private bool $cacheOnly = false;
 
     /**
      * Receives dependencies
@@ -60,11 +59,15 @@ class Downloader
      * @param  HttpClient  $httpClient
      * @param  Filesystem  $system
      * @param  Ubench  $bench
-     * @param  bool  $retryDownload
+     * @param bool $retryDownload
      */
-    public function __construct(HttpClient $httpClient, Filesystem $system, Ubench $bench, $retryDownload = false)
+    public function __construct(HttpClient $httpClient, Filesystem $system, Ubench $bench, bool $retryDownload = false)
     {
-        $this->client = new Resolver($httpClient, $bench, $retryDownload);
+        $this->client = new Resolver(
+            client: $httpClient,
+            bench: $bench,
+            retryDownload: $retryDownload
+        );
         $this->system = new SystemController($system);
         $this->bench = $bench;
         $this->laracasts = new LaracastsController($this->client);
@@ -75,73 +78,76 @@ class Downloader
      *
      * @param $options
      */
-    public function start($options)
+    public function start($options): void
     {
         $counter = [
             'series' => 1,
             'failed_episode' => 0,
         ];
 
-        $this->authenticate($options['email'], $options['password']);
+        try {
+            $this->authenticate($options['email'], $options['password']);
 
-        Utils::box('Starting Collecting the data');
+            Utils::box('Starting Collecting the data');
 
-        $this->setFilters();
+            $this->setFilters();
 
-        $this->bench->start();
+            $this->bench->start();
 
-        $localSeries = $this->system->getSeries();
+            $localSeries = $this->system->getSeries();
 
-        if (empty($this->filters)) {
-            $cachedData = $this->system->getCache();
+            if (empty($this->filters)) {
+                $cachedData = $this->system->getCache();
 
-            $onlineSeries = $this->laracasts->getSeries($cachedData, $this->cacheOnly);
+                $onlineSeries = $this->laracasts->getSeries($cachedData, $this->cacheOnly);
 
-            $this->system->setCache($onlineSeries);
-        } else {
-            $onlineSeries = $this->laracasts->getFilteredSeries($this->filters);
+                $this->system->setCache($onlineSeries);
+            } else {
+                $onlineSeries = $this->laracasts->getFilteredSeries($this->filters);
+            }
+
+            $this->bench->end();
+
+            Utils::box('Downloading');
+
+            $newEpisodes = Utils::compareLocalAndOnlineSeries($onlineSeries, $localSeries);
+
+            $newEpisodesCount = Utils::countEpisodes($newEpisodes);
+
+            Utils::write(
+                sprintf(
+                    "%d new episodes. %s elapsed with %s of memory usage.",
+                    $newEpisodesCount,
+                    $this->bench->getTime(),
+                    $this->bench->getMemoryUsage()
+                )
+            );
+
+            if ($newEpisodesCount > 0) {
+                $this->downloadEpisodes($newEpisodes, $counter, $newEpisodesCount);
+            }
+
+            Utils::writeln(
+                sprintf(
+                    "Finished! Downloaded %d new episodes. Failed: %d",
+                    $newEpisodesCount - $counter['failed_episode'],
+                    $counter['failed_episode']
+                )
+            );
+        } catch (LoginException $e) {
         }
-
-        $this->bench->end();
-
-        Utils::box('Downloading');
-
-        $newEpisodes = Utils::compareLocalAndOnlineSeries($onlineSeries, $localSeries);
-
-        $newEpisodesCount = Utils::countEpisodes($newEpisodes);
-
-        Utils::write(
-            sprintf(
-                "%d new episodes. %s elapsed with %s of memory usage.",
-                $newEpisodesCount,
-                $this->bench->getTime(),
-                $this->bench->getMemoryUsage()
-            )
-        );
-
-        if ($newEpisodesCount > 0) {
-            $this->downloadEpisodes($newEpisodes, $counter, $newEpisodesCount);
-        }
-
-        Utils::writeln(
-            sprintf(
-                "Finished! Downloaded %d new episodes. Failed: %d",
-                $newEpisodesCount - $counter['failed_episode'],
-                $counter['failed_episode']
-            )
-        );
     }
 
     /**
      * Tries to login.
      *
-     * @param  string  $email
-     * @param  string  $password
+     * @param string $email
+     * @param string $password
      *
      * @return bool
      * @throws LoginException
      */
-    public function authenticate($email, $password)
+    public function authenticate(string $email, string $password): bool
     {
         Utils::box('Authenticating');
 
@@ -169,18 +175,18 @@ class Downloader
      * @param $counter
      * @param $newEpisodesCount
      */
-    public function downloadEpisodes($newEpisodes, &$counter, $newEpisodesCount)
+    public function downloadEpisodes($newEpisodes, &$counter, $newEpisodesCount): void
     {
         $this->system->createFolderIfNotExists(SERIES_FOLDER);
 
         Utils::box('Downloading Series');
 
-        foreach ($newEpisodes as $serie) {
-            $this->system->createSerieFolderIfNotExists($serie['slug']);
+        foreach ($newEpisodes as $series) {
+            $this->system->createSeriesFolderIfNotExists($series['slug']);
 
-            foreach ($serie['episodes'] as $episode) {
+            foreach ($series['episodes'] as $episode) {
 
-                if ($this->client->downloadEpisode($serie['slug'], $episode) === false) {
+                if ($this->client->downloadEpisode($series['slug'], $episode) === false) {
                     $counter['failed_episode'] = $counter['failed_episode'] + 1;
                 }
 
@@ -196,7 +202,7 @@ class Downloader
         }
     }
 
-    protected function setFilters()
+    protected function setFilters(): bool
     {
         $shortOptions = "s:";
         $shortOptions .= 'e:';
@@ -241,10 +247,10 @@ class Downloader
         return true;
     }
 
-    private function setSeriesFilter($options)
+    private function setSeriesFilter($options): void
     {
         if (isset($options['s']) || isset($options['series-name'])) {
-            $series = isset($options['s']) ? $options['s'] : $options['series-name'];
+            $series = $options['s'] ?? $options['series-name'];
 
             if (! is_array($series))
                 $series = [$series];
@@ -252,20 +258,20 @@ class Downloader
             $slugify = new Slugify();
             $slugify->addRule("'", '');
 
-            $this->filters['series'] = array_map(function($serie) use ($slugify) {
-                return $slugify->slugify($serie);
+            $this->filters['series'] = array_map(function($series) use ($slugify) {
+                return $slugify->slugify($series);
             }, $series);
 
             Utils::write(sprintf("Series names provided: %s", json_encode($this->filters['series'])));
         }
     }
 
-    private function setEpisodesFilter($options)
+    private function setEpisodesFilter($options): void
     {
         $this->filters['episodes'] = [];
 
         if (isset($options['e']) || isset($options['series-episodes'])) {
-            $episodes = isset($options['e']) ? $options['e'] : $options['series-episodes'];
+            $episodes = $options['e'] ?? $options['series-episodes'];
 
             Utils::write(sprintf("Episode numbers provided: %s", json_encode($episodes)));
 

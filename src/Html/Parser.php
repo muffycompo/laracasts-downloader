@@ -20,7 +20,7 @@ class Parser
      * @param string $html
      * @return array
      */
-    public static function getTopicsData($html)
+    public static function getTopicsData($html): array
     {
         $data = self::getData($html);
 
@@ -35,11 +35,11 @@ class Parser
     }
 
 
-    public static function getSerieData($serieHtml)
+    public static function getSeriesData($seriesHtml): array
     {
-        $data = self::getData($serieHtml);
+        $data = self::getData($seriesHtml);
 
-        return self::extractSerieData($data['props']['series']);
+        return self::extractSeriesData($data['props']['series']);
     }
 
     /**
@@ -48,33 +48,33 @@ class Parser
      * @param string $html
      * @return array
      */
-    public static function getSeriesDataFromTopic($html)
+    public static function getSeriesDataFromTopic(string $html): array
     {
         $data = self::getData($html);
 
-        $series = $data['props']['topic']['series'];
+        $allSeries = $data['props']['topic']['series'];
 
         return array_combine(
-            array_column($series, 'slug'),
-            array_map(function($serie) {
-                return self::extractSerieData($serie);
-            }, $series)
+            array_column($allSeries, 'slug'),
+            array_map(function($series) {
+                return self::extractSeriesData($series);
+            }, $allSeries)
         );
     }
 
     /**
-     * Only extracts data we need for each serie and returns them
+     * Only extracts data we need for each series and returns them
      *
-     * @param array $serie
+     * @param array $series
      * @return array
      */
-    public static function extractSerieData($serie)
+    public static function extractSeriesData(array $series): array
     {
         return [
-            'slug' => $serie['slug'],
-            'path' => LARACASTS_BASE_URL . $serie['path'],
-            'episode_count' => $serie['episodeCount'],
-            'is_complete' => $serie['complete']
+            'slug' => $series['slug'],
+            'path' => LARACASTS_BASE_URL . $series['path'],
+            'episode_count' => $series['episodeCount'],
+            'is_complete' => $series['complete']
         ];
     }
 
@@ -85,7 +85,7 @@ class Parser
      * @param number[] $filteredEpisodes
      * @return array
      */
-    public static function getEpisodesData($episodeHtml, $filteredEpisodes = [])
+    public static function getEpisodesData(string $episodeHtml, array $filteredEpisodes = []): array
     {
         $episodes = [];
 
@@ -123,7 +123,7 @@ class Parser
         return $data['props']['downloadLink'];
     }
 
-    public static function extractLarabitsSeries($html)
+    public static function extractLarabitsSeries($html): array
     {
         $html = str_replace('\/', '/', html_entity_decode($html));
 
@@ -132,14 +132,14 @@ class Parser
         return array_unique($matches[1]);
     }
 
-    public static function getCsrfToken($html)
+    public static function getCsrfToken($html): string
     {
         preg_match('/"csrfToken": \'([^\s]+)\'/', $html, $matches);
 
         return $matches[1];
     }
 
-    public static function getUserData($html)
+    public static function getUserData($html): array
     {
 
         $data = self::getData($html);
@@ -159,7 +159,7 @@ class Parser
      * @param string $html
      * @return array
      */
-    private static function getData($html)
+    private static function getData($html): array
     {
         $parser = new Crawler($html);
 

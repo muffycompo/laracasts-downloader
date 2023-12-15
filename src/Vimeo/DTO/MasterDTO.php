@@ -8,16 +8,16 @@ use Psr\Http\Message\UriInterface;
 class MasterDTO
 {
     /** @var array */
-    private $videos;
+    private array $videos;
 
     /** @var array */
-    private $audios;
+    private array $audios;
 
     /** @var string */
-    private $masterURL;
+    private string $masterURL;
 
     /** @var string */
-    private $baseURL;
+    private string $baseURL;
 
     /** @var string */
     private $clipId;
@@ -25,7 +25,7 @@ class MasterDTO
     /**
      * @return array
      */
-    public function getVideos()
+    public function getVideos(): array
     {
         return array_map(function($video) {
             $video['extension'] = '.m4v';
@@ -35,11 +35,11 @@ class MasterDTO
     }
 
     /**
-     * @param  array  $videos
+     * @param array $videos
      *
      * @return self
      */
-    public function setVideos($videos)
+    public function setVideos(array $videos): static
     {
         $this->videos = $videos;
 
@@ -49,7 +49,7 @@ class MasterDTO
     /**
      * @return array
      */
-    public function getAudios()
+    public function getAudios(): array
     {
         return array_map(function($audio) {
             $audio['extension'] = '.m4a';
@@ -59,11 +59,11 @@ class MasterDTO
     }
 
     /**
-     * @param  array  $audios
+     * @param array $audios
      *
      * @return self
      */
-    public function setAudios($audios)
+    public function setAudios(array $audios): static
     {
         $this->audios = $audios;
 
@@ -73,11 +73,11 @@ class MasterDTO
     /**
      * Get video by id or the one with the highest quality
      *
-     * @param  null|string  $id
+     * @param string|null $id
      *
      * @return array
      */
-    public function getVideoById($id)
+    public function getVideoById(?string $id): array
     {
         $videos = $this->getVideos();
 
@@ -111,17 +111,17 @@ class MasterDTO
     /**
      * @return UriInterface
      */
-    public function getMasterURL()
+    public function getMasterURL(): UriInterface
     {
         return Psr7\Utils::uriFor($this->masterURL);
     }
 
     /**
-     * @param  string  $masterURL
+     * @param string $masterURL
      *
      * @return $this
      */
-    public function setMasterURL($masterURL)
+    public function setMasterURL(string $masterURL): static
     {
         $this->masterURL = $masterURL;
 
@@ -131,17 +131,17 @@ class MasterDTO
     /**
      * @return string
      */
-    public function getBaseURL()
+    public function getBaseURL(): string
     {
         return $this->baseURL;
     }
 
     /**
-     * @param  string  $baseURL
+     * @param string $baseURL
      *
      * @return self
      */
-    public function setBaseURL($baseURL)
+    public function setBaseURL(string $baseURL): static
     {
         $this->baseURL = $baseURL;
 
@@ -152,7 +152,7 @@ class MasterDTO
      * Make final URL from combination of absolute and relate ones
      * @return string
      */
-    public function resolveURL($url)
+    public function resolveURL($url): string
     {
         return (string)Psr7\UriResolver::resolve(
             $this->getMasterURL(),
@@ -163,17 +163,17 @@ class MasterDTO
     /**
      * @return string
      */
-    public function getClipId()
+    public function getClipId(): string
     {
         return $this->clipId;
     }
 
     /**
-     * @param  string  $clipId
+     * @param string $clipId
      *
      * @return self
      */
-    public function setClipId($clipId)
+    public function setClipId(string $clipId): static
     {
         $this->clipId = $clipId;
 

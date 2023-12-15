@@ -4,14 +4,15 @@ namespace App\Vimeo;
 
 use App\Utils\Utils;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 
 class VimeoDownloader
 {
     /** @var VimeoRepository */
-    private $repository;
+    private VimeoRepository $repository;
 
     /** @var Client */
-    public $client;
+    public Client $client;
 
     public function __construct()
     {
@@ -21,9 +22,12 @@ class VimeoDownloader
     }
 
     /**
+     * @param $vimeoId
+     * @param $filepath
      * @return bool
+     * @throws GuzzleException
      */
-    public function download($vimeoId, $filepath)
+    public function download($vimeoId, $filepath): bool
     {
         $video = $this->repository->get($vimeoId);
 
@@ -48,7 +52,13 @@ class VimeoDownloader
         return $this->mergeSources($filenames[0], $filenames[1], $filepath);
     }
 
-    private function downloadSource($baseURL, $sourceData, $filepath)
+    /**
+     * @param $baseURL
+     * @param $sourceData
+     * @param $filepath
+     * @return void
+     */
+    private function downloadSource($baseURL, $sourceData, $filepath): void
     {
         file_put_contents($filepath, base64_decode($sourceData['init_segment'], true));
 
@@ -61,36 +71,49 @@ class VimeoDownloader
         $this->downloadSegments($segmentURLs, $filepath, $sizes);
     }
 
-    private function downloadSegments($segmentURLs, $filepath, $sizes)
+    /**
+     * @param $segmentURLs
+     * @param $filepath
+     * @param $sizes
+     * @return void
+     * @throws GuzzleException
+     */
+    private function downloadSegments($segmentURLs, $filepath, $sizes): void
     {
-        $type = strpos($filepath, 'm4v') !== false ? 'video' : 'audio';
+        $type = str_contains($filepath, 'm4v') ? 'video' : 'audio';
+
         Utils::writeln("Downloading $type...");
 
-        $downloadedBytes = 0;
-
-        $totalBytes = array_sum($sizes);
+//        $downloadedBytes = 0;
+//
+//        $totalBytes = array_sum($sizes);
 
         foreach ($segmentURLs as $index => $segmentURL) {
-            $request = $this->client->createRequest('GET', $segmentURL, [
+            $this->client->request('GET', $segmentURL, [
                 'save_to' => fopen($filepath, 'a'),
+                'progress' => function ($downloadTotal, $downloadedBytes): void {
+                    if (php_sapi_name() === "cli") {
+                        printf("> Downloaded %s of %s (%d%%)      \r",
+                            Utils::formatBytes($downloadedBytes),
+                            Utils::formatBytes($downloadTotal),
+                            Utils::getPercentage($downloadedBytes, $downloadTotal)
+                        );
+                    }
+                },
             ]);
 
-            Utils::showProgressBar($request, $downloadedBytes, $totalBytes);
-
-            $this->client->send($request);
-
-            $downloadedBytes += $sizes[$index];
+//            $downloadedBytes += $sizes[$index];
         }
     }
 
     /**
-     * @param  string  $videoPath
-     * @param  string  $audioPath
-     * @param  string  $outputPath
+     * @param string $videoPath
+     * @param string $audioPath
+     * @param string $outputPath
      *
      * @return bool
      */
-    private function mergeSources($videoPath, $audioPath, $outputPath)
+    private function mergeSources(string $videoPath, string $audioPath, string $outputPath): bool
     {
         $code = 0;
         $output = [];

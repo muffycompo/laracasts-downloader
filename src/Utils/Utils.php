@@ -5,9 +5,6 @@
 
 namespace App\Utils;
 
-use GuzzleHttp\Event\ProgressEvent;
-use GuzzleHttp\Message\RequestInterface;
-
 /**
  * Class Utils
  *
@@ -20,7 +17,7 @@ class Utils
      *
      * @return string
      */
-    public static function newLine()
+    public static function newLine(): string
     {
         if (php_sapi_name() == "cli") {
             return "\n";
@@ -35,12 +32,12 @@ class Utils
      * @param $array
      * @return int
      */
-    public static function countEpisodes($array)
+    public static function countEpisodes($array): int
     {
         $total = 0;
 
-        foreach ($array as $serie) {
-            $total += count($serie['episodes']);
+        foreach ($array as $series) {
+            $total += count($series['episodes']);
         }
 
         return $total;
@@ -53,29 +50,29 @@ class Utils
      * @param $localListArray
      * @return array
      */
-    public static function compareLocalAndOnlineSeries($onlineListArray, $localListArray)
+    public static function compareLocalAndOnlineSeries($onlineListArray, $localListArray): array
     {
         $seriesCollection = new SeriesCollection([]);
 
-        foreach ($onlineListArray as $serieSlug => $serie) {
+        foreach ($onlineListArray as $seriesSlug => $series) {
 
-            if (array_key_exists($serieSlug, $localListArray)) {
-                if ($serie['episode_count'] == count($localListArray[$serieSlug])) {
+            if (array_key_exists($seriesSlug, $localListArray)) {
+                if ($series['episode_count'] == count($localListArray[$seriesSlug])) {
                     continue;
                 }
 
-                $episodes = $serie['episodes'];
-                $serie['episodes'] = [];
+                $episodes = $series['episodes'];
+                $series['episodes'] = [];
 
                 foreach ($episodes as $episode) {
-                    if (! in_array($episode['number'], $localListArray[$serieSlug])) {
-                        $serie['episodes'][] = $episode;
+                    if (! in_array($episode['number'], $localListArray[$seriesSlug])) {
+                        $series['episodes'][] = $episode;
                     }
                 }
 
-                $seriesCollection->add($serie);
+                $seriesCollection->add($series);
             } else {
-                $seriesCollection->add($serie);
+                $seriesCollection->add($series);
             }
         }
 
@@ -87,7 +84,7 @@ class Utils
      *
      * @param $text
      */
-    public static function box($text)
+    public static function box($text): void
     {
         echo self::newLine();
         echo "====================================" . self::newLine();
@@ -100,7 +97,7 @@ class Utils
      *
      * @param $text
      */
-    public static function write($text)
+    public static function write($text): void
     {
         echo "> " . $text . self::newLine();
     }
@@ -111,7 +108,7 @@ class Utils
      * @param $name
      * @return mixed
      */
-    public static function parseEpisodeName($name)
+    public static function parseEpisodeName($name): mixed
     {
         return preg_replace('/[^A-Za-z0-9\- _]/', '', $name);
     }
@@ -121,7 +118,7 @@ class Utils
      *
      * @param $text
      */
-    public static function writeln($text)
+    public static function writeln($text): void
     {
         echo self::newLine();
         echo "> " . $text . self::newLine();
@@ -134,7 +131,7 @@ class Utils
      * @param int $precision
      * @return string
      */
-    public static function formatBytes($bytes, $precision = 2)
+    public static function formatBytes($bytes, int $precision = 2): string
     {
         $units = array('B', 'KB', 'MB', 'GB', 'TB');
 
@@ -154,30 +151,26 @@ class Utils
      * @param $total
      * @return float
      */
-    public static function getPercentage($cur, $total)
+    public static function getPercentage($cur, $total): float
     {
-        // Hide warning division by zero
-        return round(@($cur / $total * 100));
+        try
+        {
+            return round(($cur / $total) * 100);
+        }
+        catch (\DivisionByZeroError $e)
+        {
+            return floatval(0);
+        }
     }
 
-    /**
-     * @param RequestInterface $request
-     * @param int $downloadedBytes
-     * @param int|null $totalBytes
-    */
-    public static function showProgressBar($request, $downloadedBytes, $totalBytes = null)
+    public static function showProgressBar($downloadTotal, $downloadedBytes): void
     {
-        if (php_sapi_name() == "cli") {
-            $request->getEmitter()->on('progress', function(ProgressEvent $e) use ($downloadedBytes, $totalBytes) {
-
-                $totalBytes = $totalBytes ?? $e->downloadSize;
-
-                printf("> Downloaded %s of %s (%d%%)      \r",
-                    Utils::formatBytes($e->downloaded + $downloadedBytes),
-                    Utils::formatBytes($totalBytes),
-                    Utils::getPercentage($e->downloaded + $downloadedBytes, $totalBytes)
-                );
-            });
+        if (php_sapi_name() === "cli") {
+            printf("> Downloaded %s of %s (%d%%)      \r",
+                Utils::formatBytes($downloadedBytes),
+                Utils::formatBytes($downloadTotal),
+                Utils::getPercentage($downloadedBytes, $downloadTotal)
+            );
         }
     }
 }

@@ -1,9 +1,12 @@
 <?php
+
+global $options;
+
 /**
  * App start point
  */
 use League\Flysystem\Filesystem;
-use League\Flysystem\Adapter\Local as Adapter;
+use League\Flysystem\Local\LocalFilesystemAdapter as Adapter;
 
 require_once 'bootstrap.php';
 
@@ -17,7 +20,12 @@ $bench = new Ubench();
 /*
  * App
  */
-$app = new App\Downloader($client, $filesystem, $bench, RETRY_DOWNLOAD);
+$app = new App\Downloader(
+    httpClient: $client,
+    system: $filesystem,
+    bench: $bench,
+    retryDownload: RETRY_DOWNLOAD
+);
 
 try {
     $app->start($options);
