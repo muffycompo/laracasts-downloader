@@ -101,7 +101,9 @@ class Controller
         $seriesCollection = new SeriesCollection([]);
 
         foreach($filters as $seriesSlug => $filteredEpisodes) {
-            $seriesHtml = $this->client->getHtml("series/$seriesSlug");
+            $url = LARACASTS_BASE_URL . "/series/$seriesSlug";
+
+            $seriesHtml = $this->client->getHtml($url);
 
             $series = Parser::getSeriesData($seriesHtml);
 

@@ -159,7 +159,7 @@ class Parser
      * @param string $html
      * @return array
      */
-    private static function getData($html): array
+    private static function getData(string $html): array
     {
         $parser = new Crawler($html);
 

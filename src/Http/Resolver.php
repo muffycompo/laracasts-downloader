@@ -78,7 +78,9 @@ class Resolver
         $token = $this->getCsrfToken();
 
         try {
-            $response = $this->client->post(LARACASTS_POST_LOGIN_PATH, [
+            $uri = LARACASTS_BASE_URL . '/' . LARACASTS_POST_LOGIN_PATH;
+
+            $response = $this->client->post($uri, [
                 'cookies' => $this->cookies,
                 'headers' => [
                     "X-XSRF-TOKEN" => $token,
