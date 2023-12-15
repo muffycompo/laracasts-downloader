@@ -86,7 +86,7 @@ class VimeoDownloader
         Utils::writeln("Downloading $type...");
 
         $bytesDownloaded = 0;
-//
+
         $totalBytes = array_sum($sizes);
 
         foreach ($segmentURLs as $index => $segmentURL) {
@@ -118,7 +118,7 @@ class VimeoDownloader
         $code = 0;
         $output = [];
 
-        if (PHP_OS=='WINNT'){
+        if (PHP_OS === 'WINNT'){
             $command = "ffmpeg -i \"$videoPath\" -i \"$audioPath\" -vcodec copy -acodec copy -strict -2 \"$outputPath\" 2> nul";
         } else {
             $command = "ffmpeg -i '$videoPath' -i '$audioPath' -vcodec copy -acodec copy -strict -2 '$outputPath' >/dev/null 2>&1";
@@ -126,7 +126,7 @@ class VimeoDownloader
 
         exec($command, $output, $code);
 
-        if ($code == 0) {
+        if ($code === 0) {
             unlink($videoPath);
             unlink($audioPath);
 

@@ -1,8 +1,9 @@
 {
-  "name": "iamfreee/laracasts-downloader",
-  "description": "PHP library to download laracasts lessons",
+  "name": "muffycompo/laracasts-downloader",
+  "description": "PHP library to download laracasts lessons based on carlosflorencio\n/\nlaracasts-downloader package.",
   "license": "MIT",
   "require": {
+    "php": "^8.0",
     "guzzlehttp/guzzle": "^7.8",
     "league/flysystem": "^3.23",
     "symfony/dom-crawler": "^7.0",
@@ -21,5 +22,6 @@
   "autoload": {
     "psr-4": {"App\\": "src/"}
   },
-  "minimum-stability" : "dev"
+  "minimum-stability" : "beta",
+  "prefer-stable": true
 }

@@ -23,11 +23,11 @@ class VideoDTO
     }
 
     /**
-     * @param  string  $masterURL
+     * @param string $masterURL
      *
      * @return self
      */
-    public function setMasterURL($masterURL): static
+    public function setMasterURL(string $masterURL): static
     {
         $this->masterURL = $masterURL;
 

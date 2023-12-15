@@ -154,7 +154,7 @@ class MasterDTO
      */
     public function resolveURL($url): string
     {
-        return (string)Psr7\UriResolver::resolve(
+        return (string) Psr7\UriResolver::resolve(
             $this->getMasterURL(),
             Psr7\Utils::uriFor($this->getBaseURL().$url)
         );
